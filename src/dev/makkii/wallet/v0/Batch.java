@@ -44,10 +44,10 @@ public class Batch {
          */
         {
             Blockchain.require(Blockchain.getStorage(key) == null);
-            Blockchain.println("!!! Wallet/load condition_0 pass");
+            Blockchain.println("!!! Batch/load condition_0 pass");
 
             Blockchain.require(amount.multiply(BigInteger.valueOf(len_addresses)).equals(Blockchain.getValue()));
-            Blockchain.println("!!! Wallet/load condition_1 pass");
+            Blockchain.println("!!! Batch/load condition_1 pass");
         }
 
         /**
@@ -85,7 +85,7 @@ public class Batch {
          */
         {
             Blockchain.require(data != null);
-            Blockchain.println("!!! Wallet/send condition_0 pass");
+            Blockchain.println("!!! Batch/send condition_0 pass");
         }
 
         /**
@@ -133,7 +133,7 @@ public class Batch {
          */
         {
             Blockchain.require(data != null);
-            Blockchain.println("!!! Wallet/withdraw condition_0 pass");
+            Blockchain.println("!!! Batch/withdraw condition_0 pass");
         }
 
         /**
@@ -185,7 +185,7 @@ public class Batch {
                 return withdraw();
 
             default:
-                Blockchain.println("!!! Wallet/main revert no_such_method method=" + method);
+                Blockchain.println("!!! Batch/main revert no_such_method method=" + method);
                 Blockchain.revert();
                 return Constant.BYTES_EMPTY;
         }
