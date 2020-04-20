@@ -69,8 +69,8 @@ public class Batch {
         int len = Util.get_big_integer_length() + Util.get_address_length() * len_addresses;
         byte[] data = new byte[len];
         ABIStreamingEncoder encoder = new ABIStreamingEncoder(data);
-        encoder.encodeOneBigInteger(total);
         encoder.encodeOneAddressArray(addresses);
+        encoder.encodeOneBigIntegerArray(amounts);
         Blockchain.putStorage(key, data);
 
         return Constant.BYTES_EMPTY;
@@ -80,7 +80,8 @@ public class Batch {
      * caller -> amount * addresses, value -> load
      *
      * conditions
-     *   1. caller`s storage record exists
+     *   0. caller`s storage record exists
+     *   1. value == 0
      *
      * @return byte[]
      */
@@ -90,8 +91,8 @@ public class Batch {
         byte[] data = Blockchain.getStorage(key);
 
         ABIDecoder decoder = new ABIDecoder(data);
-        BigInteger amount = decoder.decodeOneBigInteger();
         Address[] addresses = decoder.decodeOneAddressArray();
+        BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
 
         /**
          * conditions
@@ -99,6 +100,10 @@ public class Batch {
         {
             Blockchain.require(data != null);
             Blockchain.println("!!! Batch/send condition_0 pass");
+
+            Blockchain.require(Blockchain.getValue().equals(Constant.BN_ZERO));
+            Blockchain.println("!!! Batch/send condition_1 pass");
+
         }
 
         /**
@@ -112,7 +117,7 @@ public class Batch {
         for (int i = 0, m = addresses.length; i < m; i ++){
             Result result = Blockchain.call(
                 addresses[i],
-                amount,
+                amounts[i],
                 null,
                 Blockchain.getRemainingEnergy()
             );
@@ -126,7 +131,8 @@ public class Batch {
      * caller -> cancel -> refund value & clear storage
      *
      * conditions
-     *   1. caller`s storage record exists
+     *   0. caller`s storage record exists
+     *   1. value == 0
      *
      * @return byte[]
      */
@@ -137,9 +143,12 @@ public class Batch {
 
         byte[] data = Blockchain.getStorage(key);
         ABIDecoder decoder = new ABIDecoder(data);
-        BigInteger amount = decoder.decodeOneBigInteger();
-        Address[] addresses = decoder.decodeOneAddressArray();
-        BigInteger amount_total = amount.multiply(BigInteger.valueOf(addresses.length));
+        decoder.decodeOneAddressArray();
+        BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
+        BigInteger amount_total = BigInteger.valueOf(0);
+        for(int i = 0, m = amounts.length; i < m; i++){
+            amount_total = amount_total.add(amounts[i]);
+        }
 
         /**
          * conditions
@@ -147,6 +156,9 @@ public class Batch {
         {
             Blockchain.require(data != null);
             Blockchain.println("!!! Batch/withdraw condition_0 pass");
+
+            Blockchain.require(Blockchain.getValue().equals(Constant.BN_ZERO));
+            Blockchain.println("!!! Batch/withdraw condition_1 pass");
         }
 
         /**
