@@ -31,27 +31,36 @@ public class Batch {
      * host -> amount * addresses -> load
      *
      * conditions
-     *   1. caller`s storage record does not exist
-     *   2. amount * addresses.length == value
+     *   0. caller`s storage record does not exist
+     *   1. addresses.length == amounts.length
+     *   2. total == value
      *
-     * @param amount BigInteger
      * @param addresses Address[]
+     * @param amounts BigInteger[]
      * @return byte[]
      */
-    private static byte[] load(BigInteger amount, Address[] addresses){
+    private static byte[] load(Address[] addresses, BigInteger[] amounts){
 
         byte[] key = Blockchain.getCaller().toByteArray();
-        int len_addresses = addresses.length;
 
         /**
          * conditions
          */
+        int len_addresses = addresses.length;
+        int len_amounts = amounts.length;
+        BigInteger total = BigInteger.valueOf(0);
+        for(int i = 0, m = amounts.length; i < m; i++){
+            total = total.add(amounts[i]);
+        }
         {
             Blockchain.require(Blockchain.getStorage(key) == null);
             Blockchain.println("!!! Batch/load condition_0 pass");
 
-            Blockchain.require(amount.multiply(BigInteger.valueOf(len_addresses)).equals(Blockchain.getValue()));
+            Blockchain.require(len_addresses == len_amounts);
             Blockchain.println("!!! Batch/load condition_1 pass");
+
+            Blockchain.require(total.equals(Blockchain.getValue()));
+            Blockchain.println("!!! Batch/load condition_2 pass");
         }
 
         /**
@@ -60,7 +69,7 @@ public class Batch {
         int len = Util.get_big_integer_length() + Util.get_address_length() * len_addresses;
         byte[] data = new byte[len];
         ABIStreamingEncoder encoder = new ABIStreamingEncoder(data);
-        encoder.encodeOneBigInteger(amount);
+        encoder.encodeOneBigInteger(total);
         encoder.encodeOneAddressArray(addresses);
         Blockchain.putStorage(key, data);
 
@@ -178,9 +187,9 @@ public class Batch {
                 return get();
 
             case "load":
-                BigInteger amount = decoder.decodeOneBigInteger();
                 Address[] addresses = decoder.decodeOneAddressArray();
-                return load(amount, addresses);
+                BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
+                return load(addresses, amounts);
 
             case "send":
                 return send();
