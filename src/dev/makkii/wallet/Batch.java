@@ -1,14 +1,18 @@
-package dev.makkii.wallet.v0;
+
+package dev.makkii.wallet;
 
 import java.math.BigInteger;
 import avm.Address;
 import avm.Blockchain;
 import avm.Result;
+import dev.makkii.Constant;
+import dev.makkii.Util;
 import org.aion.avm.userlib.abi.ABIDecoder;
-import dev.makkii.wallet.Constant;
-import dev.makkii.wallet.Util;
 import org.aion.avm.userlib.abi.ABIStreamingEncoder;
 
+/**
+ * contract sends batch transactions
+ */
 public class Batch {
 
     /**
@@ -110,14 +114,14 @@ public class Batch {
     }
 
     /**
-     * caller -> batch send -> clear storage
+     * caller -> cancel -> refund value & clear storage
      *
      * conditions
      *   1. caller`s storage record exists
      *
      * @return byte[]
      */
-    private static byte[] withdraw(){
+    private static byte[] cancel(){
 
         Address caller = Blockchain.getCaller();
         byte[] key = caller.toByteArray();
@@ -164,9 +168,9 @@ public class Batch {
         String method = decoder.decodeMethodName();
         BigInteger value = Blockchain.getValue();
 
-        Blockchain.println("!!! Escrow/main data=" + Util.bytes_to_hex(data));
-        Blockchain.println("!!! Escrow/main value=" + value.toString());
-        Blockchain.println("!!! Escrow/main method=" + method);
+        Blockchain.println("!!! Batch/main data=" + Util.bytes_to_hex(data));
+        Blockchain.println("!!! Batch/main value=" + value.toString());
+        Blockchain.println("!!! Batch/main method=" + method);
 
         switch (method) {
 
@@ -181,8 +185,8 @@ public class Batch {
             case "send":
                 return send();
 
-            case "withdraw":
-                return withdraw();
+            case "cancel":
+                return cancel();
 
             default:
                 Blockchain.println("!!! Batch/main revert no_such_method method=" + method);

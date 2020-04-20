@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#jobs="$(./bash_compile.sh dev.makkii.trade.v0.Escrow ./src/dev/makkii/trade/*.java ./src/dev/makkii/trade/v0/*.java && java -jar ./avm/avm.jar deploy ./build/dapp.jar)"
-jobs="$(./bash_compile.sh dev.makkii.trade.v0.Escrow ./src/dev/makkii/trade/*.java ./src/dev/makkii/trade/v0/*.java  && java -jar ./avm/avm.jar deploy ./build/dapp.jar)"
+jobs="$(./bash_compile.sh dev.makkii.wallet.Batch ./src/dev/makkii/*.java ./src/dev/makkii/wallet/Batch.java  && java -jar ./avm/avm.jar deploy ./build/dapp.jar)"
+#jobs="$(./bash_compile.sh dev.makkii.wallet.ETF ./src/dev/makkii/*.java ./src/dev/makkii/wallet/ETF.java  && java -jar ./avm/avm.jar deploy ./build/dapp.jar)"
 line_sender="";line_contract="";line_energy="";line_result=""
 while IFS= read
 do

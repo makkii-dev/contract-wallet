@@ -1,4 +1,4 @@
-package dev.makkii.wallet;
+package dev.makkii;
 
 public class Util {
 
