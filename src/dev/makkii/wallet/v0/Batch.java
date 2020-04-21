@@ -1,4 +1,4 @@
-package dev.makkii.wallet;
+package dev.makkii.wallet.v0;
 
 import java.math.BigInteger;
 import avm.Address;
@@ -71,7 +71,7 @@ public class Batch {
         /**
          * storage
          */
-        int len = Util.get_big_integer_length() + Util.get_address_length() * len_addresses;
+        int len = Util.get_big_integer_length() + Util.get_address_length() * len_addresses + Util.get_big_integer_length() * len_addresses;
         byte[] data = new byte[len];
         ABIStreamingEncoder encoder = new ABIStreamingEncoder(data);
         encoder.encodeOneBigInteger(total);
@@ -124,7 +124,7 @@ public class Batch {
             Result result = Blockchain.call(
                 addresses[i],
                 amounts[i],
-                null,
+                Constant.BYTES_EMPTY,
                 Blockchain.getRemainingEnergy()
             );
             Blockchain.require(result.isSuccess());
