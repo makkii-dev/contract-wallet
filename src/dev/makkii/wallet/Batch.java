@@ -1,4 +1,3 @@
-
 package dev.makkii.wallet;
 
 import java.math.BigInteger;
@@ -12,6 +11,10 @@ import org.aion.avm.userlib.abi.ABIStreamingEncoder;
 
 /**
  * contract sends batch transactions
+ *
+ * storage
+ * key: address
+ * value: total_amount(BigInteger) + addresses(BigInteger[]) + amounts(BigInteger[])
  */
 public class Batch {
 
@@ -22,16 +25,19 @@ public class Batch {
      */
     private static byte[] get(){
 
+        /**
+         * key
+         */
         byte[] key = Blockchain.getCaller().toByteArray();
 
         return Blockchain.getStorage(key);
     }
 
     /**
-     * host -> amount * addresses -> load
+     * host -> amounts -> load
      *
      * conditions
-     *   0. caller`s storage record does not exist
+     *   0. record does not exist
      *   1. addresses.length == amounts.length
      *   2. total == value
      *
@@ -41,27 +47,26 @@ public class Batch {
      */
     private static byte[] load(Address[] addresses, BigInteger[] amounts){
 
+        /**
+         * key
+         */
         byte[] key = Blockchain.getCaller().toByteArray();
 
         /**
          * conditions
          */
+        Blockchain.require(Blockchain.getStorage(key) == null);
+        Blockchain.println("!!! Batch/load condition_0 pass");
         int len_addresses = addresses.length;
         int len_amounts = amounts.length;
+        Blockchain.require(len_addresses == len_amounts);
+        Blockchain.println("!!! Batch/load condition_1 pass");
         BigInteger total = BigInteger.valueOf(0);
         for(int i = 0, m = amounts.length; i < m; i++){
             total = total.add(amounts[i]);
         }
-        {
-            Blockchain.require(Blockchain.getStorage(key) == null);
-            Blockchain.println("!!! Batch/load condition_0 pass");
-
-            Blockchain.require(len_addresses == len_amounts);
-            Blockchain.println("!!! Batch/load condition_1 pass");
-
-            Blockchain.require(total.equals(Blockchain.getValue()));
-            Blockchain.println("!!! Batch/load condition_2 pass");
-        }
+        Blockchain.require(total.equals(Blockchain.getValue()));
+        Blockchain.println("!!! Batch/load condition_2 pass");
 
         /**
          * storage
@@ -69,6 +74,7 @@ public class Batch {
         int len = Util.get_big_integer_length() + Util.get_address_length() * len_addresses;
         byte[] data = new byte[len];
         ABIStreamingEncoder encoder = new ABIStreamingEncoder(data);
+        encoder.encodeOneBigInteger(total);
         encoder.encodeOneAddressArray(addresses);
         encoder.encodeOneBigIntegerArray(amounts);
         Blockchain.putStorage(key, data);
@@ -80,7 +86,7 @@ public class Batch {
      * caller -> amount * addresses, value -> load
      *
      * conditions
-     *   0. caller`s storage record exists
+     *   0. record exists
      *   1. value == 0
      *
      * @return byte[]
@@ -91,6 +97,7 @@ public class Batch {
         byte[] data = Blockchain.getStorage(key);
 
         ABIDecoder decoder = new ABIDecoder(data);
+        decoder.decodeOneBigInteger();
         Address[] addresses = decoder.decodeOneAddressArray();
         BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
 
@@ -103,7 +110,6 @@ public class Batch {
 
             Blockchain.require(Blockchain.getValue().equals(Constant.BN_ZERO));
             Blockchain.println("!!! Batch/send condition_1 pass");
-
         }
 
         /**
@@ -143,22 +149,17 @@ public class Batch {
 
         byte[] data = Blockchain.getStorage(key);
         ABIDecoder decoder = new ABIDecoder(data);
-        decoder.decodeOneAddressArray();
-        BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
-        BigInteger amount_total = BigInteger.valueOf(0);
-        for(int i = 0, m = amounts.length; i < m; i++){
-            amount_total = amount_total.add(amounts[i]);
-        }
+        BigInteger total = decoder.decodeOneBigInteger();
 
         /**
          * conditions
          */
         {
             Blockchain.require(data != null);
-            Blockchain.println("!!! Batch/withdraw condition_0 pass");
+            Blockchain.println("!!! Batch/cancel condition_0 pass");
 
             Blockchain.require(Blockchain.getValue().equals(Constant.BN_ZERO));
-            Blockchain.println("!!! Batch/withdraw condition_1 pass");
+            Blockchain.println("!!! Batch/cancel condition_1 pass");
         }
 
         /**
@@ -171,7 +172,7 @@ public class Batch {
          */
         Result result = Blockchain.call(
             caller,
-            amount_total,
+            total,
             null,
             Blockchain.getRemainingEnergy()
         );
@@ -199,9 +200,10 @@ public class Batch {
                 return get();
 
             case "load":
-                Address[] addresses = decoder.decodeOneAddressArray();
-                BigInteger[] amounts = decoder.decodeOneBigIntegerArray();
-                return load(addresses, amounts);
+                return load(
+                    decoder.decodeOneAddressArray(),
+                    decoder.decodeOneBigIntegerArray()
+                );
 
             case "send":
                 return send();
